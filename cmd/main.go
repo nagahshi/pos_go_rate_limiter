@@ -5,18 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/redis/go-redis/v9"
 
 	"github.com/nagahshi/pos_go_rate_limiter/configs"
-	"github.com/nagahshi/pos_go_rate_limiter/internal/entity"
 	repository "github.com/nagahshi/pos_go_rate_limiter/internal/infra/database"
 	server "github.com/nagahshi/pos_go_rate_limiter/internal/infra/web"
 	"github.com/nagahshi/pos_go_rate_limiter/internal/usecase"
 )
-
-var repo entity.LimiterRepository
 
 func main() {
 	// LoadConfig - carrega as configurações do arquivo .env
@@ -25,19 +21,23 @@ func main() {
 		log.Fatalf("Error loading config: %v", err)
 	}
 
-	repo = repository.NewLimiterRepositoryWithRedis(newRedisClient(cfg))
-	limiter := usecase.NewLimiter(repo, 10, 10, 10*time.Second)
+	limiter := usecase.NewLimiter(
+		repository.NewLimiterRepositoryWithRedis(newRedisClient(cfg)),
+		cfg.RateLimiterIP,
+		cfg.RateLimiterToken,
+		cfg.RateLimiterTimeout,
+		cfg.RateLimiterWindowTime,
+	)
 
 	server := server.NewServer(cfg.PORT)
 	server.AddHandler("/", func(w http.ResponseWriter, r *http.Request) {
-		blocked, err := limiter.DoRequest(context.Background(), "abc123", 10)
+		isAllowed, err := limiter.AllowToken(r.Context(), "abc123")
 		if err != nil {
-			log.Printf("Error: %v", err)
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		if blocked {
+		if !isAllowed {
 			http.Error(w, "Blocked", http.StatusTooManyRequests)
 			return
 		}
