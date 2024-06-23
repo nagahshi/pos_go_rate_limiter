@@ -21,8 +21,4 @@ func main() {
 	server.AddHandler("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Hello, World!")
 	})
-	server.Start()
-
-	// Print the configuration values
-	fmt.Printf("Config: %+v\n", cfg)
 }
