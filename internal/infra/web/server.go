@@ -6,8 +6,9 @@ import (
 )
 
 type Server struct {
-	PORT     string
-	Handlers map[string]http.HandlerFunc
+	PORT            string
+	Handlers        map[string]http.HandlerFunc
+	MiddlewareChain []func(http.HandlerFunc) http.HandlerFunc
 }
 
 func NewServer(port string) *Server {
@@ -18,7 +19,11 @@ func NewServer(port string) *Server {
 
 func (s *Server) AddHandler(path string, handler http.HandlerFunc) {
 	s.Handlers = make(map[string]http.HandlerFunc)
-	s.Handlers[path] = handler
+	s.Handlers[path] = buildChain(handler, s.MiddlewareChain...)
+}
+
+func (s *Server) AddMiddleware(middleware func(http.HandlerFunc) http.HandlerFunc) {
+	s.MiddlewareChain = append(s.MiddlewareChain, middleware)
 }
 
 func (s *Server) Start() {
@@ -32,4 +37,12 @@ func (s *Server) Start() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func buildChain(f http.HandlerFunc, m ...func(http.HandlerFunc) http.HandlerFunc) http.HandlerFunc {
+	if len(m) == 0 {
+		return f
+	}
+
+	return m[0](buildChain(f, m[1:cap(m)]...))
 }

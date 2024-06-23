@@ -11,6 +11,7 @@ import (
 	"github.com/nagahshi/pos_go_rate_limiter/configs"
 	repository "github.com/nagahshi/pos_go_rate_limiter/internal/infra/database"
 	server "github.com/nagahshi/pos_go_rate_limiter/internal/infra/web"
+	middlewareLimiter "github.com/nagahshi/pos_go_rate_limiter/internal/infra/web/middleware"
 	"github.com/nagahshi/pos_go_rate_limiter/internal/usecase"
 )
 
@@ -30,18 +31,8 @@ func main() {
 	)
 
 	server := server.NewServer(cfg.PORT)
+	server.AddMiddleware(middlewareLimiter.NewMiddleware(limiter).Run)
 	server.AddHandler("/", func(w http.ResponseWriter, r *http.Request) {
-		isAllowed, err := limiter.AllowToken(r.Context(), "abc123")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if !isAllowed {
-			http.Error(w, "Blocked", http.StatusTooManyRequests)
-			return
-		}
-
 		fmt.Fprint(w, "Hello, World!")
 	})
 

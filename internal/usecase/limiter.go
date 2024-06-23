@@ -31,3 +31,11 @@ func (l *Limiter) AllowIP(ctx context.Context, IP string) (bool, error) {
 func (l *Limiter) AllowToken(ctx context.Context, token string) (bool, error) {
 	return l.repository.Allow(ctx, token, l.maxTokenRequests, l.timeToBlock, l.windowTime)
 }
+
+func (l *Limiter) GetMaxIPRequests() int64 {
+	return l.maxIPRequests
+}
+
+func (l *Limiter) GetMaxTokenRequests() int64 {
+	return l.maxTokenRequests
+}
