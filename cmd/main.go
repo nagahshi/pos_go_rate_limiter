@@ -17,7 +17,7 @@ import (
 
 func main() {
 	// LoadConfig - carrega as configurações do arquivo .env
-	cfg, err := configs.LoadConfig("configs")
+	cfg, err := configs.LoadConfig("")
 	if err != nil {
 		log.Fatalf("Error loading config: %v", err)
 	}
