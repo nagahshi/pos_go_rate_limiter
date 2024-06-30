@@ -42,7 +42,7 @@ func (rl *LimiterRepositoryWithRedis) CounterByKey(ctx context.Context, key stri
 // doBlock - bloqueia request
 func (rl *LimiterRepositoryWithRedis) DoBlockByKey(ctx context.Context, key string, timeToBlock int64) error {
 	// seta valor default 1 apenas para verificar se existe depois
-	err := rl.client.SetNX(ctx, key, 1, time.Duration(timeToBlock)*time.Second).Err()
+	err := rl.client.SetNX(ctx, key, "blocked", time.Duration(timeToBlock)*time.Second).Err()
 	if handleErrInRedis(err) != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (rl *LimiterRepositoryWithRedis) DoBlockByKey(ctx context.Context, key stri
 func (rl *LimiterRepositoryWithRedis) HasBlockByKey(ctx context.Context, key string) bool {
 	value, err := rl.client.Get(ctx, key).Result()
 	// caso não houver erros e a chave existir com o valor default 1
-	if handleErrInRedis(err) == nil && value == "1" {
+	if handleErrInRedis(err) == nil && value == "blocked" {
 		return true
 	}
 
