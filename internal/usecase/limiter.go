@@ -46,7 +46,7 @@ func (l *Limiter) allow(ctx context.Context, key string, limit int64) (bool, err
 	}
 
 	// verifica se o contador é maior ou igual ao limite
-	if count >= int64(limit) {
+	if count > int64(limit) {
 		err := l.repository.DoBlockByKey(ctx, keyToBlock, l.timeToBlock)
 		if err != nil {
 			return false, errors.New("não foi possível bloquear a chave")
